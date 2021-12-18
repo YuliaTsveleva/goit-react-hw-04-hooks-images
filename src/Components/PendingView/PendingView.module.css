@@ -1,0 +1,19 @@
+.Loading {
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.IconSpinner {
+  margin-right: 15px;
+  animation: spinner infinite 4s linear;
+}
+
+@keyframes spinner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
