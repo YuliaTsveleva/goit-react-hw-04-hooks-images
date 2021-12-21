@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import s from './ImageGallery.module.css';
 import ImageGalleryItem from '../ImageGalleryItem/ImageGalleryItem';
 import Button from '../Button/Button';
@@ -10,62 +10,35 @@ import 'react-toastify/dist/ReactToastify.css';
 import { nanoid } from 'nanoid';
 import fetchImages from '../../services/apiService';
 import Modal from '../Modal/Modal';
+import Searchbar from '../Searchbar/Searchbar';
 
-class ImageGallery extends Component {
-  state = {
-    images: [],
-    page: 1,
-    error: null,
-    status: 'idle',
-    loading: false,
-    showModal: false,
-    modalUrl: '',
-    modalAlt: '',
-  };
+export default function ImageGallery() {
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState('idle');
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalUrl, setModalUrl] = useState('');
+  const [modalAlt, setModalAlt] = useState('');
+  const [imageName, setImageName] = useState('');
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevQuery = prevProps.imageName;
-    const newQuery = this.props.imageName;
-    if (prevQuery !== newQuery) {
-      this.setState({
-        status: 'pending',
-        page: 1,
-        images: [],
-      });
-      this.fetchGallery(1);
+  useEffect(() => {
+    setImages([]);
+    setPage(1);
+  }, [imageName]);
+
+  useEffect(() => {
+    if (!imageName) {
+      return;
     }
-  }
+    console.log('before fetch', 'page', page, 'images', images);
 
-  toSetPage = () => {
-    this.setState(prevState => {
-      if (this.state.images.length > 1) {
-        return { page: prevState.page };
-      }
-    });
-  };
-
-  loadMore = () => {
-    this.setState({ loading: true });
-    this.toSetPage();
-    this.fetchGallery(this.state.page);
-    this.toSmoothScroll();
-  };
-
-  toSmoothScroll = () => {
-    setTimeout(() => {
-      window.scrollBy({
-        top: document.documentElement.clientHeight,
-        behavior: 'smooth',
-      });
-    }, 1000);
-  };
-
-  fetchGallery = page => {
-    const newQuery = this.props.imageName;
+    setStatus('pending');
     // setTimeout(() => {
-    fetchImages(newQuery, page)
+    fetchImages(imageName, page)
       .then(data => {
-        const images = data.map(image => {
+        const newImages = data.map(image => {
           return {
             id: image.id,
             webformatURL: image.webformatURL,
@@ -74,69 +47,79 @@ class ImageGallery extends Component {
           };
         });
 
-        this.setState(prevState => {
-          return {
-            images: [...prevState.images, ...images],
-            status: 'resolved',
-            page: prevState.page + 1,
-            loading: false,
-          };
-        });
-        if (this.state.images.length === 0) {
+        console.log('images', imageName, page, images);
+        console.log('newImages', imageName, page, newImages);
+
+        setImages(prev => [...prev, ...newImages]);
+        setLoading(false);
+        setStatus('resolved');
+
+        if (newImages.length === 0) {
           return toast.error('No images matching your request!');
         }
-        if (this.state.images.length > 0 && images.length === 0) {
+        if (images.length > 0 && newImages.length === 0) {
           return toast.info('No more images matching your request!');
         }
       })
-      .catch(error => this.setState({ error, status: 'rejected' }));
+      .catch(error => {
+        setError(error);
+        setStatus('rejected');
+      });
     // }, 1000);
+    // }
+
+    console.log('after fetch', 'page', page, 'images', images);
+
+    return () => {
+      console.log('finished use effect', 'images', images);
+    };
+  }, [imageName, page]);
+
+  const loadMore = () => {
+    setLoading(true);
+    setPage(prev => prev + 1);
+    toSmoothScroll();
   };
 
-  openModal = () => {
-    this.setState({
-      showModal: true,
-    });
+  const toSmoothScroll = () => {
+    setTimeout(() => {
+      window.scrollBy({
+        top: document.documentElement.clientHeight,
+        behavior: 'smooth',
+      });
+    }, 1000);
   };
 
-  handleSelectImage = e => {
-    const targetIndex = this.state.images.findIndex(
-      image => image.id === +e.target.id,
-    );
-    const targetImage = this.state.images[targetIndex];
-    this.setState({
-      modalUrl: targetImage.largeImageURL,
-      modalAlt: targetImage.tags,
-    });
-    this.openModal();
+  const handleSelectImage = e => {
+    const targetIndex = images.findIndex(image => image.id === +e.target.id);
+    const targetImage = images[targetIndex];
+    setModalUrl(targetImage.largeImageURL);
+    setModalAlt(targetImage.tags);
+    setShowModal(true);
   };
 
-  closeModal = () => {
-    this.setState({
-      showModal: false,
-      modalUrl: '',
-      modalAlt: '',
-    });
+  const closeModal = () => {
+    setShowModal(false);
+    setModalUrl('');
+    setModalAlt('');
   };
 
-  render() {
-    const { images, error, status, loading, showModal, modalUrl, modalAlt } =
-      this.state;
+  const handleFormSubmit = imageName => {
+    setImageName(imageName);
+    setPage(1);
+  };
 
-    if (status === 'idle') {
-      return <PreView />;
-    }
+  return (
+    <>
+      <Searchbar onSubmit={handleFormSubmit} />
 
-    if (status === 'pending') {
-      return <Loader />;
-    }
+      {status === 'idle' && <PreView />}
 
-    if (status === 'rejected') {
-      return <ErrorView message={error.message} />;
-    }
+      {status === 'pending' && <Loader />}
 
-    if (status === 'resolved') {
-      return (
+      {status === 'rejected' && <ErrorView message={error.message} />}
+
+      {status === 'resolved' && (
         <>
           <ul className={s.ImageGallery}>
             {images &&
@@ -146,24 +129,24 @@ class ImageGallery extends Component {
                   id={image.id}
                   src={image.webformatURL}
                   alt={image.tags}
-                  onClick={this.handleSelectImage}
+                  onClick={handleSelectImage}
                 />
               ))}
           </ul>
           {showModal && (
             <Modal
-              toClose={this.closeModal}
+              toClose={closeModal}
               src={modalUrl}
               alt={modalAlt}
               isShow={showModal}
             />
           )}
-          {images.length > 0 && !loading && <Button loadMore={this.loadMore} />}
-          {loading && <Loader />}
+          {images.length > 0 && !loading && <Button loadMore={loadMore} />}
+          {/* {loading && <Loader />} */}
         </>
-      );
-    }
-  }
-}
+      )}
+    </>
+  );
 
-export default ImageGallery;
+  // }
+}

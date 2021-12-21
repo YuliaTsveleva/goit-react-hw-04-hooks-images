@@ -51,15 +51,6 @@ class ImageGallery extends Component {
     this.toSmoothScroll();
   };
 
-  toSmoothScroll = () => {
-    setTimeout(() => {
-      window.scrollBy({
-        top: document.documentElement.clientHeight,
-        behavior: 'smooth',
-      });
-    }, 1000);
-  };
-
   fetchGallery = page => {
     const newQuery = this.props.imageName;
     // setTimeout(() => {
@@ -119,6 +110,15 @@ class ImageGallery extends Component {
     });
   };
 
+  toSmoothScroll = () => {
+    setTimeout(() => {
+      window.scrollBy({
+        top: document.documentElement.clientHeight,
+        behavior: 'smooth',
+      });
+    }, 1000);
+  };
+
   render() {
     const { images, error, status, loading, showModal, modalUrl, modalAlt } =
       this.state;
@@ -167,3 +167,62 @@ class ImageGallery extends Component {
 }
 
 export default ImageGallery;
+
+useEffect(() => {
+  setImages([]);
+  setPage(1);
+}, [imageName]);
+
+// переписать
+useEffect(() => {
+  if (!imageName) {
+    return;
+  }
+  setStatus('pending');
+  // setImages([]);
+  // setPage(1);
+  // fetchImages(1);
+  // console.log('page before fetch', page);
+  // function fetchGallery(page) {
+  // setTimeout(() => {
+  fetchImages(imageName, page)
+    .then(data => {
+      const newImages = data.map(image => {
+        return {
+          id: image.id,
+          webformatURL: image.webformatURL,
+          largeImageURL: image.largeImageURL,
+          tags: image.tags,
+        };
+      });
+
+      console.log('images', images);
+      console.log('newImages', newImages);
+      setImages(prev => [...prev, ...newImages]);
+
+      setLoading(false);
+      setStatus('resolved');
+      // setPage(prevPage => prevPage + 1);
+
+      if (newImages.length === 0) {
+        return toast.error('No images matching your request!');
+      }
+      if (images.length > 0 && newImages.length === 0) {
+        return toast.info('No more images matching your request!');
+      }
+    })
+    .then(newImages => {})
+    .catch(error => {
+      setError(error);
+      setStatus('rejected');
+    });
+  // }, 1000);
+  // }
+}, [imageName, page]);
+
+const toSetPage = () => {
+  if (images.length > 1) {
+    // console.log('page from toSetPage', page);
+    return setPage(prev => prev + 1);
+  }
+};
