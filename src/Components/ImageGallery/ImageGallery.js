@@ -24,18 +24,12 @@ export default function ImageGallery() {
   const [imageName, setImageName] = useState('');
 
   useEffect(() => {
-    setImages([]);
-    setPage(1);
-  }, [imageName]);
-
-  useEffect(() => {
     if (!imageName) {
       return;
     }
-    console.log('before fetch', 'page', page, 'images', images);
 
     setStatus('pending');
-    // setTimeout(() => {
+
     fetchImages(imageName, page)
       .then(data => {
         const newImages = data.map(image => {
@@ -46,9 +40,6 @@ export default function ImageGallery() {
             tags: image.tags,
           };
         });
-
-        console.log('images', imageName, page, images);
-        console.log('newImages', imageName, page, newImages);
 
         setImages(prev => [...prev, ...newImages]);
         setLoading(false);
@@ -65,14 +56,6 @@ export default function ImageGallery() {
         setError(error);
         setStatus('rejected');
       });
-    // }, 1000);
-    // }
-
-    console.log('after fetch', 'page', page, 'images', images);
-
-    return () => {
-      console.log('finished use effect', 'images', images);
-    };
   }, [imageName, page]);
 
   const loadMore = () => {
@@ -107,18 +90,15 @@ export default function ImageGallery() {
   const handleFormSubmit = imageName => {
     setImageName(imageName);
     setPage(1);
+    setImages([]);
   };
 
   return (
     <>
       <Searchbar onSubmit={handleFormSubmit} />
-
       {status === 'idle' && <PreView />}
-
       {status === 'pending' && <Loader />}
-
       {status === 'rejected' && <ErrorView message={error.message} />}
-
       {status === 'resolved' && (
         <>
           <ul className={s.ImageGallery}>
@@ -142,11 +122,9 @@ export default function ImageGallery() {
             />
           )}
           {images.length > 0 && !loading && <Button loadMore={loadMore} />}
-          {/* {loading && <Loader />} */}
+          {loading && <Loader />}
         </>
       )}
     </>
   );
-
-  // }
 }
