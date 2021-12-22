@@ -22,6 +22,7 @@ export default function ImageGallery() {
   const [modalUrl, setModalUrl] = useState('');
   const [modalAlt, setModalAlt] = useState('');
   const [imageName, setImageName] = useState('');
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     if (!imageName) {
@@ -32,24 +33,17 @@ export default function ImageGallery() {
 
     fetchImages(imageName, page)
       .then(data => {
-        const newImages = data.map(image => {
-          return {
-            id: image.id,
-            webformatURL: image.webformatURL,
-            largeImageURL: image.largeImageURL,
-            tags: image.tags,
-          };
-        });
-
-        setImages(prev => [...prev, ...newImages]);
+        setImages(prev => [...prev, ...data.newImages]);
         setLoading(false);
         setStatus('resolved');
-
-        if (newImages.length === 0) {
-          return toast.error('No images matching your request!');
-        }
-        if (images.length > 0 && newImages.length === 0) {
+        console.log(data.newImages.length);
+        console.log(data.total);
+        setTotal(data.total);
+        if (data.newImages.length && data.newImages.length <= data.total) {
           return toast.info('No more images matching your request!');
+        }
+        if (data.newImages.length === 0) {
+          return toast.error('No images matching your request!');
         }
       })
       .catch(error => {
@@ -121,7 +115,9 @@ export default function ImageGallery() {
               isShow={showModal}
             />
           )}
-          {images.length > 0 && !loading && <Button loadMore={loadMore} />}
+          {images.length > 0 && images.length < total && !loading && (
+            <Button loadMore={loadMore} />
+          )}
           {loading && <Loader />}
         </>
       )}

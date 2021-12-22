@@ -10,7 +10,18 @@ function fetchImages(newQuery, page) {
       }
       return Promise.reject(new Error(`No image with name ${newQuery}`));
     })
-    .then(data => data.hits);
+    .then(data => {
+      const newImages = data.hits.map(image => {
+        return {
+          id: image.id,
+          webformatURL: image.webformatURL,
+          largeImageURL: image.largeImageURL,
+          tags: image.tags,
+        };
+      });
+      let total = data.totalHits;
+      return { newImages, total };
+    });
 }
 
 export default fetchImages;
