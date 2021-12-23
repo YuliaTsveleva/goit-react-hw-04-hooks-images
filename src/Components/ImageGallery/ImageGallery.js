@@ -33,17 +33,22 @@ export default function ImageGallery() {
 
     fetchImages(imageName, page)
       .then(data => {
+        if (!data.newImages) {
+          setStatus('idle');
+          return;
+        }
+
         setImages(prev => [...prev, ...data.newImages]);
         setLoading(false);
         setStatus('resolved');
-        console.log(data.newImages.length);
-        console.log(data.total);
+        // console.log('newImages', data.newImages.length);
+        // console.log('total', data.total);
+        // console.log('images', images.length);
         setTotal(data.total);
-        if (data.newImages.length && data.newImages.length <= data.total) {
+
+        const imagesRest = data.total - images.length - data.newImages.length;
+        if (data.newImages.length && data.newImages.length >= imagesRest) {
           return toast.info('No more images matching your request!');
-        }
-        if (data.newImages.length === 0) {
-          return toast.error('No images matching your request!');
         }
       })
       .catch(error => {

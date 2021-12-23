@@ -1,3 +1,6 @@
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 const API_KEY = '24048830-4cc4486dcdd2cd17ebea2a9c8';
 
 function fetchImages(newQuery, page) {
@@ -20,6 +23,9 @@ function fetchImages(newQuery, page) {
         };
       });
       let total = data.totalHits;
+      if (newImages.length === 0) {
+        return toast.error('No images matching your request!');
+      }
       return { newImages, total };
     });
 }
