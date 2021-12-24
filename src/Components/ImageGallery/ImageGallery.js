@@ -39,11 +39,8 @@ export default function ImageGallery() {
         }
 
         setImages(prev => [...prev, ...data.newImages]);
-        setLoading(false);
         setStatus('resolved');
-        // console.log('newImages', data.newImages.length);
-        // console.log('total', data.total);
-        // console.log('images', images.length);
+        setLoading(false);
         setTotal(data.total);
 
         const imagesRest = data.total - images.length - data.newImages.length;
@@ -96,22 +93,22 @@ export default function ImageGallery() {
     <>
       <Searchbar onSubmit={handleFormSubmit} />
       {status === 'idle' && <PreView />}
+      <ul className={s.ImageGallery}>
+        {images &&
+          images.map(image => (
+            <ImageGalleryItem
+              key={nanoid()}
+              id={image.id}
+              src={image.webformatURL}
+              alt={image.tags}
+              onClick={handleSelectImage}
+            />
+          ))}
+      </ul>
       {status === 'pending' && <Loader />}
       {status === 'rejected' && <ErrorView message={error.message} />}
       {status === 'resolved' && (
         <>
-          <ul className={s.ImageGallery}>
-            {images &&
-              images.map(image => (
-                <ImageGalleryItem
-                  key={nanoid()}
-                  id={image.id}
-                  src={image.webformatURL}
-                  alt={image.tags}
-                  onClick={handleSelectImage}
-                />
-              ))}
-          </ul>
           {showModal && (
             <Modal
               toClose={closeModal}
